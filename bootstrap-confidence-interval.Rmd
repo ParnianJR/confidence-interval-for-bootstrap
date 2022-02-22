@@ -1,0 +1,177 @@
+---
+title: "confidence interval for bootstrap"
+author: "Parnian Jahangiri Rad"
+date: "1/7/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+set.seed(9813007)
+n <- 16
+mu <- 7
+sd <- 2
+X <- rnorm(n,mu,sd)
+theta.hat <- mean(X)
+theta.hat
+```
+
+## Confidence interval for **mean**:  
+```{r}
+#Bootstrap
+nboot <- 1000
+theta.hat.star <- numeric(nboot)
+for(i in 1:nboot){
+  y <- sample(X,n,replace = T)
+  theta.hat.star[i] <- mean(y)
+}
+theta.hat.star <- sort(theta.hat.star)
+hist(theta.hat.star)
+```
+95% confidence interval for $\mu$ when we have standard error:  
+```{r}
+#confidence interval with 95% confidence when we do have se
+x.bar <- mean(X)
+a <- (x.bar - (1.96 * (sd/sqrt(n))))
+b <- (x.bar + (1.96 * (sd/sqrt(n))))
+cbind(a,b)
+abs(a-b)
+```
+
+```{r}
+#confidence interval with 95% confidence using quantile(for X sample)
+#This method is exact
+d = quantile(theta.hat.star, c(0.025, 0.975)) 
+d
+```
+### The Percentile Bootstrap method  
+$\alpha=0.05$ for 95% CIs:  
+```{r}
+alpha <- 0.05
+j <- (alpha/2)*nboot
+k <- (1- alpha/2)*nboot
+cbind(theta.hat.star[j],theta.hat.star[k])
+#interval's length
+interval.length1 <- theta.hat.star[k] - theta.hat.star[j]
+interval.length1
+```
+### The Bootstrap t interval method  
+```{r}
+theta.hats.b <- numeric(nboot)
+ts <- numeric(nboot)
+
+for(b in 1:nboot){
+  y <- sample(X, size = n, replace = TRUE)
+  theta.hats.b[b] <- mean(y)
+  sd.theta.hats.b <- numeric(nboot)
+  
+  for(b2 in 1:nboot){
+    y2 <- sample(X,size = n,replace = TRUE)
+    sd.theta.hats.b[b2] <- mean(y2)
+  }
+  
+  se.b <- sd(sd.theta.hats.b)
+  
+   ts[b] <- (theta.hats.b[b] - theta.hat) / se.b
+}
+
+alpha <- 0.05
+ts.ordered <- sort(ts)
+
+qs <- quantile(ts.ordered, probs = c(alpha/2, 1-(alpha/2)))
+se.hat <- sd(theta.hats.b)
+
+(CI = c(theta.hat - qs[2]*se.hat, theta.hat - qs[1]*se.hat))
+#interval's length
+interval.length2 <- CI[2] - CI[1]
+```
+
+```{r}
+interval.length1
+interval.length2
+```
+**Bootstrap t interval** method is more accurate than percentile since
+it has a smaller interval length.(and confidence interval for both
+methods is 95%.)  
+
+## Confidence interval for **variance**:  
+Now, our $\hat{\theta}$ is variance:  
+```{r}
+theta.hat <- var(X)
+theta.hat
+```
+
+```{r}
+#Bootstrap
+nboot <- 1000
+theta.hat.star <- numeric(nboot)
+for(i in 1:nboot){
+  y <- sample(X,n,replace = T)
+  theta.hat.star[i] <- var(y)
+}
+theta.hat.star <- sort(theta.hat.star)
+hist(theta.hat.star)
+```
+
+```{r}
+#confidence interval with 95% confidence using quantile(for X sample)
+#This method is exact
+d = quantile(theta.hat.star, c(0.025, 0.975)) 
+d
+```
+
+### The Percentile Bootstrap method   
+$\alpha=0.05$ for 95% CIs:  
+```{r}
+alpha <- 0.05
+j <- (alpha/2)*nboot
+k <- (1- alpha/2)*nboot
+cbind(theta.hat.star[j],theta.hat.star[k])
+#interval's length
+interval.length1 <- theta.hat.star[k] - theta.hat.star[j]
+```
+### ### The Bootstrap t interval method  
+```{r}
+theta.hats.b <- numeric(nboot)
+ts <- numeric(nboot)
+
+for(b in 1:nboot){
+  y <- sample(X, size = n, replace = TRUE)
+  theta.hats.b[b] <- var(y)
+  sd.theta.hats.b <- numeric(nboot)
+  
+  for(b2 in 1:nboot){
+    y2 <- sample(X,size = n,replace = TRUE)
+    sd.theta.hats.b[b2] <- var(y2)
+  }
+  
+  se.b <- sd(sd.theta.hats.b)
+  
+   ts[b] <- (theta.hats.b[b] - theta.hat) / se.b
+}
+
+alpha <- 0.05
+ts.ordered <- sort(ts)
+
+qs <- quantile(ts.ordered, probs = c(alpha/2, 1-(alpha/2)))
+se.hat <- sd(theta.hats.b)
+
+(CI = c(theta.hat - qs[2]*se.hat, theta.hat - qs[1]*se.hat))
+#interval's length
+interval.length2 <- CI[2] - CI[1]
+```
+
+```{r}
+interval.length1
+interval.length2
+```
+Again, **Bootstrap t interval** method is more accurate than percentile since it has a smaller interval length.(and confidence interval for both
+methods is 95%.)  
+
